@@ -1,15 +1,23 @@
 import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import styled from 'styled-components';
-import { CartIcon } from './constants/icons';
-import { clearCart, removeItem, increase, decrease, calculateTotals } from './redux/cartSlice';
+import { clearCart, removeItem, increase, decrease, calculateTotals, fetchCartItems } from './redux/cartSlice';
+import {CartIcon} from './constants/icons';
 
 const App = () => {
-  const { cartItems, totalAmount, totalPrice } = useSelector((state) => state.cart);
+  const { cartItems, totalAmount, totalPrice, status, error } = useSelector((state) => state.cart);
   const dispatch = useDispatch();
 
   useEffect(() => {
-    dispatch(calculateTotals());
+    if (status === 'idle') {
+      dispatch(fetchCartItems());
+    }
+  }, [status, dispatch]);
+
+  useEffect(() => {
+    if (cartItems.length > 0) {
+      dispatch(calculateTotals());
+    }
   }, [cartItems, dispatch]);
 
   const handleIncrease = (id) => {
@@ -23,7 +31,7 @@ const App = () => {
   return (
     <Container>
       <Header>
-        <Title>UMC PlayList</Title>
+        <Title>Real Data UMC PlayList</Title>
         <CartIconContainer>
           <CartIcon />
           <ItemCount>{totalAmount}</ItemCount>
@@ -31,6 +39,8 @@ const App = () => {
       </Header>
       <CartSection>
         <SectionTitle>당신이 선택한 음반</SectionTitle>
+        {status === 'loading' && <p>Loading...</p>}
+        {status === 'failed' && <p>{error}</p>}
         {cartItems.map((item) => (
           <CartItem key={item.id}>
             <AlbumImage src={item.img} alt={item.title} />
